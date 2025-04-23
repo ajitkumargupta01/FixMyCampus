@@ -846,6 +846,9 @@ elif st.session_state.page =="🔐 Change Password":
  
 elif st.session_state.page == "🏠 Home":
     home()
+elif st.session_state.page == "📊 Issue Status":
+    issue_dashboard()
+    issue_status()     
 
 elif st.session_state.page == "💬 Help & Support":
     help_support_page()
