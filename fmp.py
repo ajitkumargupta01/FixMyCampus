@@ -1,5 +1,6 @@
 import streamlit as st
 import fmp_db as db
+import mysql.connector 
 from streamlit_option_menu import option_menu
 import mysql
 from datetime import datetime
