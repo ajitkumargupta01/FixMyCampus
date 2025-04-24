@@ -1,8 +1,6 @@
-streamlit_option_menu
 streamlit
 pandas
 mysql-connector-python
 mysql
-mysql.connector
 plotly
 streamlit-option-menu
