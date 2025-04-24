@@ -1,11 +1,11 @@
 import streamlit as st
 import fmp_db as db
-import mysql.connector 
 from streamlit_option_menu import option_menu
 import mysql
 from datetime import datetime
 import pandas as pd
 import plotly.express as px
+
 
 if "page" not in st.session_state:
     st.session_state.page = "login"
@@ -19,13 +19,12 @@ st.markdown("""
     }
     </style>
     """, unsafe_allow_html=True)
-
 #------------------------------ Issue dashboard -----------------------
 def issue_dashboard():
     st.title("📊 Issue Analytics Dashboard")
 
     # --- Fetch data from DB ---
-    issues = db.view_all_issue()
+    issues =    db.view_all_issue()
     
     # --- Convert to DataFrame ---
     df = pd.DataFrame(issues, columns=[
@@ -64,6 +63,16 @@ def issue_dashboard():
     st.plotly_chart(line_chart, use_container_width=True)
 
 #------------------------------- Login ---------------------------------
+@st.dialog("Message")
+def ban_message():
+    st.warning("⚠ Oops! It looks like you've been banned. Please reach out to the admin if you think this is a mistake.")
+    email = "fixmycampus@mitmeerut.ac.in"
+    # st.markdown("")
+    st.markdown(f"Email ✉:  [{email}](mailto:{email})")
+
+
+
+
 def login():
     st.markdown("<h1 style='color: blue; text-align:center;margin-top:-50px;'>FixMyCampus</h1>", unsafe_allow_html=True)
     db.create_Table()
@@ -78,21 +87,29 @@ def login():
         login_button = col1.form_submit_button("Log In")
         forgot_button= col4.form_submit_button("Forgot password")
         signup_button = col2.form_submit_button("Sign Up")
-        Admin_button = col6.link_button("Admin login","http://localhost:8502/")
+        Admin_button = col6.link_button("Admin login","http://localhost:8504/")
+
 
         if forgot_button:
             forgot_password()
             
         elif login_button:
-            user = db.check_user(roll_no, password)
-            if user:
-                st.session_state.roll_no = roll_no
-                st.session_state.user = user[0]
-                st.success("✅ Successfully logged in!")
-                st.session_state.page = "home"
-                st.rerun()
-            else:
-                st.warning("❌ User not found or account is banned. Please sign up.")
+            try:
+                user = db.check_user(roll_no, password)
+                # st.write(user[1][0])
+                if user[0] and not user[1][0]:
+                    st.session_state.roll_no = roll_no
+                    st.session_state.user = user[0][0]
+                    st.success("✅ Successfully logged in!")
+                    st.session_state.page = "home"
+                    st.rerun()
+                elif user[0] and user[1][0]:
+                    ban_message()
+
+                else:
+                    st.warning("❌ User not found. Please sign up.")
+            except TypeError as e:
+                st.error("Username or password is wrong ❌")
 
         elif signup_button:
             st.session_state.page = "signup"
@@ -116,6 +133,7 @@ def forgot_password():
                     if success:
                         st.success("✅ Password reset successfully!")
                         st.session_state.page = "login"
+                        #st.rerun()
                     else:
                         st.error("❌ No matching user found with that Roll Number and Mobile Number.")
                 else:
@@ -127,6 +145,7 @@ def forgot_password():
 def sign_up():
     st.markdown("<h1 style='color: blue; text-align:center;margin-top:-50px;'>FixMyCampus</h1>", unsafe_allow_html=True)
     db.create_Table()
+    # st.title("Sign-Up")
     st.markdown("<h1 style='font-size:30px;'>Sign-Up</h1>", unsafe_allow_html=True)
 
     with st.form("signup_form"):
@@ -154,6 +173,7 @@ def sign_up():
                     db.register_user(data)
                     st.success("✅ Sign-up successful! Please log in.")
                     st.session_state.page = "login"
+                   # st.rerun()
                 except mysql.connector.errors.IntegrityError:
                     st.warning("The Roll number already exists ⚠")
                 except Exception as e:
@@ -166,6 +186,7 @@ def sign_up():
 
 #-------------------------------- About Campus ----------------------------
 def about_campus():
+    # Set custom CSS to design the page with a Milky Way background
     st.markdown("""
     <style>
         body {
@@ -173,10 +194,10 @@ def about_campus():
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            color: #f1a7c2;
+            color: #f1a7c2;  /* Light Cosmic Pink text for contrast */
         }
         .highlight {
-            background-color: rgba(0, 0, 0, 0.7);
+            background-color: rgba(0, 0, 0, 0.7);  /* Dark semi-transparent background */
             padding: 1rem;
             border-radius: 10px;
             box-shadow: 2px 2px 10px rgba(0,0,0,0.15);
@@ -185,7 +206,7 @@ def about_campus():
         .section-title {
             font-size: 24px;
             font-weight: bold;
-            color: #ffffff;
+            color: #ffffff;  /* White color for headings */
             margin-top: 25px;
         }
         .emoji {
@@ -193,25 +214,32 @@ def about_campus():
         }
         .content {
             font-size: 18px;
-            color: #f1a7c2;
+            color: #f1a7c2;  /* Light Cosmic Pink text for readability */
         }
         .subheader {
             font-size: 20px;
             font-weight: bold;
-            color: #ffffff;
+            color: #ffffff;  /* White color for subheaders */
         }
     </style>
     """, unsafe_allow_html=True)
 
+    # Page title
     st.title("🏫 Meerut Institute of Technology ")
+
+    # st.markdown('<div class="highlight">', unsafe_allow_html=True)
+
+    # Location
     st.subheader("📍 Location")
     st.write("NH-58, Baral Partapur Bypass Road, Meerut – 250103, Uttar Pradesh, India")
 
+    # Contact Information
     st.markdown('<div class="section-title">☎ Contact</div>', unsafe_allow_html=True)
     st.markdown("- 📞 Phone: +91-9334455661")
     st.markdown("- 📧 Email: info@mitmeerut.net.in")
     st.markdown("- 🌐 Website: [mitmeerut.net.in](https://mitmeerut.net.in/)")
 
+    # Campus Facilities
     st.markdown('<div class="section-title">🏢 Campus Facilities</div>', unsafe_allow_html=True)
     st.markdown(""" 
     - 🏠 Separate Hostels for Boys & Girls
@@ -224,6 +252,7 @@ def about_campus():
     - 🛠 State-of-the-art Engineering Labs
     """)
 
+    # Courses Offered
     st.markdown('<div class="section-title">🎓 Courses Offered</div>', unsafe_allow_html=True)
     st.markdown(""" 
     - 🖥 B.Tech - Computer Science & Engineering
@@ -239,9 +268,11 @@ def about_campus():
     - 🎓 M.Tech and MBA programs
     """)
 
+    # Vision
     st.markdown('<div class="section-title">🌟 Vision</div>', unsafe_allow_html=True)
     st.info("To impart value-based education integrated with practical knowledge, preparing students to lead with wisdom and integrity.")
 
+    # Mission
     st.markdown('<div class="section-title">🎯 Mission</div>', unsafe_allow_html=True)
     st.markdown(""" 
     - 🔬 Foster research, innovation, and critical thinking.
@@ -251,6 +282,7 @@ def about_campus():
     - 🌍 Nurture students into global citizens with strong ethics.
     """)
 
+    # Career Development & Training
     st.markdown('<div class="section-title">💼 Career Development & Training</div>', unsafe_allow_html=True)
     st.markdown(""" 
     - 🧩 Industry-Specific Training Modules
@@ -259,6 +291,7 @@ def about_campus():
     - 🎯 Placement Preparation and Mock Interviews
     """)
 
+    # Extra Curricular Activities
     st.markdown('<div class="section-title">📚 Extra Curriculars</div>', unsafe_allow_html=True)
     st.markdown(""" 
     - 🎭 Annual Fest, Cultural & Tech Events
@@ -267,8 +300,11 @@ def about_campus():
     - 💬 Debate, Coding & Entrepreneurship Clubs
     """)
 
+    # More Information
     st.markdown('<div class="section-title">🔗 More Information</div>', unsafe_allow_html=True)
     st.markdown("👉 [Click here to visit the official website](https://mitmeerut.net.in/)")
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
 #-------------------------------- View Profile -----------------------------
 def view_profile():
@@ -312,22 +348,25 @@ def view_profile():
         st.warning("🚫 No user data found for the logged-in Roll No.")
         return
 
-    first_name, last_name, email, mob_num, gender, roll_no = user
+    first_name, last_name, email, mob_num, gender, roll_no,_ = user
 
     st.markdown(f"""
         <div class="profile-container">
             <div class="profile-title">Welcome, {first_name} {last_name}!</div>
             <div class="profile-field"><span class="profile-label">📧 Email:</span> {email}</div>
             <div class="profile-field"><span class="profile-label">📞 Mobile:</span> {mob_num}</div>
-            <div class="profile-field"><span class="profile-label">⚧ Gender:</span> {gender}</div>
+            <div class="profile-field"><span class="profile-label"> ⚧ Gender:</span> {gender}</div>
             <div class="profile-field"><span class="profile-label">🎓 Roll No:</span> {roll_no}</div>
         </div>
     """, unsafe_allow_html=True)
 
+    # Add edit button inside a form
     with st.form("edit_form"):
         edit = st.form_submit_button("✏ Edit My Profile")
         if edit:
             edit_profile()
+
+
 
 #------------------------------- Edit profile -----------------------------
 @st.dialog(" ")
@@ -347,6 +386,7 @@ def edit_profile():
 
     first_name, last_name, email, mob_num, gender, _ = user
 
+    # Input fields for editing
     st.markdown("### 📝 Update Your Information")
     new_first_name = st.text_input("First Name", value=first_name)
     new_last_name = st.text_input("Last Name", value=last_name)
@@ -387,12 +427,14 @@ def report_issue():
     try:
         if st.button("Submit Issue"):
             if issue_type and description and location:
+                # Placeholder for database insert
                 status = "Pending"
                 roll_no = st.session_state.roll_no
                 data = (roll_no,issue_type,description,location,status,date_reported)
                 db.add_issue(data)
                 st.success("Issue reported successfully!")
                 st.info(f"Date: {date_reported}")
+                # Backend insert logic here
             else:
                 st.error("Please fill all fields before submitting.")
     except Exception as e:
@@ -400,10 +442,11 @@ def report_issue():
 
 #------------------------------------ My Issues ----------------------------
 def my_issue():
+    # Status color mapping
     status_colors = {
-        "Pending": "#f59e0b",
-        "In Progress": "#3b82f6",
-        "Resolved": "#10b981"
+        "Pending": "#f59e0b",       # yellow
+        "In Progress": "#3b82f6",   # blue
+        "Resolved": "#10b981"       # green
     }
     st.title("📊 Issue Status Dashboard")
     st.markdown("Here you can track the status of your reported campus issues.")
@@ -421,10 +464,13 @@ def my_issue():
     if not issues:
         st.info("You haven't reported any issues yet.")
         return
+    # st.write(issues)
     issues.reverse()
     for issue in issues:
+
         issue_id,issue_type,description,location,status,date_reported = issue[1],issue[2],issue[3],issue[4],issue[5],issue[6]
-        color = status_colors.get(status, "#9ca3af")
+        # issue_type, description, location, status, date_reported = issue
+        color = status_colors.get(status, "#9ca3af")  # default gray
 
         with st.container():
             st.markdown(f"""
@@ -449,10 +495,11 @@ def my_issue():
 
 #--------------------------------- 📊 Issue Status -----------------------------
 def issue_status():
+    # Status color mapping
     status_colors = {
-        "Pending": "#f59e0b",
-        "In Progress": "#3b82f6",
-        "Resolved": "#10b981"
+        "Pending": "#f59e0b",       # yellow
+        "In Progress": "#3b82f6",   # blue
+        "Resolved": "#10b981"       # green
     }
 
     st.markdown("""
@@ -464,6 +511,7 @@ def issue_status():
         </style>
     """,unsafe_allow_html=True)
 
+
     st.markdown("## 📊 Issue Status Dashboard in Campus")
     st.markdown("Here you can track the status of your reported campus issues.")
     st.markdown("---")
@@ -471,15 +519,17 @@ def issue_status():
     issues = db.view_all_issue()
 
     if not issues:
-        st.info("No issues found in the database.")
+        st.info("You haven't reported any issues yet.")
         return
-
+    # st.write(issues)
     col1,col2 = st.columns(2)
     issues.reverse()
     
     for index, issue in enumerate(issues):
+        
         issue_id,issue_type,description,location,status,date_reported = issue[1],issue[2],issue[3],issue[4],issue[5],issue[6]
-        color = status_colors.get(status, "#9ca3af")
+        # issue_type, description, location, status, date_reported = issue
+        color = status_colors.get(status, "#9ca3af")  # default gray
 
         container = col1 if index % 2 == 0 else col2
 
@@ -527,6 +577,7 @@ def change_password():
             elif new_password == current_password:
                 st.warning("⚠ New password should be different from the current password.")
             else:
+                # Call DB function
                 success = db.verify_and_update_password(
                     st.session_state.roll_no,
                     current_password,
@@ -542,6 +593,7 @@ def help_support_page():
     st.title("🆘 Help & Support")
     st.markdown("Click on a question below to view its answer. Only one can stay open at a time.")
 
+    # --- FAQ data ---
     faq_items = [
         {
             "key": "faq1",
@@ -565,20 +617,25 @@ def help_support_page():
         }
     ]
 
+    # --- Session initialization ---
     if "active_faq" not in st.session_state:
         st.session_state.active_faq = None
 
+    # --- Accordion-like FAQ section ---
     for item in faq_items:
         if st.button(f"📌 {item['question']}", key=item["key"]):
+            # Set this FAQ as active, close others
             if st.session_state.active_faq == item["key"]:
-                st.session_state.active_faq = None
+                st.session_state.active_faq = None  # Collapse if clicked again
             else:
                 st.session_state.active_faq = item["key"]
 
+        # Show answer if it's active
         if st.session_state.active_faq == item["key"]:
             st.info(item["answer"])
             st.markdown("---")
 
+    # --- Contact Section ---
     st.markdown("### 📞 Contact Support")
 
     col1, col2 = st.columns(2)
@@ -592,6 +649,7 @@ def help_support_page():
         st.code("+91 97253 58432")
         st.code("+91 72504 06015")
 
+
     with col2:
         st.markdown("---")
         st.markdown("🏢 Office Address:")
@@ -599,6 +657,7 @@ def help_support_page():
 
     st.markdown("### 💬 Chat Assistant (Coming Soon)")
     st.info("Hello! I'm your FixMyCampus assistant bot. This feature will be live soon 😉")
+
 
 #-----------------Home-----------------------
 def home():
@@ -667,11 +726,12 @@ def home():
             <p style="font-size:20px;">You're on FixMyCampus – report, track, and resolve campus issues effortlessly.</p>
         </div>
     """, unsafe_allow_html=True)
-
 #---------------------About----------------
+
 def about():
     st.markdown("""
         <style>
+            /* Hero Section Styles */
             .hero-section {
                 background-image: linear-gradient(to right top, #14338e, #006fca, #00a2c2, #00cd7f, #a6eb12);
                 padding: 3rem 1.5rem;
@@ -681,9 +741,12 @@ def about():
                 margin-bottom: 3rem;
                 box-shadow: 0 12px 30px rgba(0,0,0,0.3);
                 font-size: 22px;
+                # animation: fadeIn 1s ease-in-out;
                 height:180px;
                 opacity:0.8;
             }
+
+            /* Info Card Styles */
             .info-card {
                 background: rgba(255, 255, 255, 0.1);
                 padding: 2rem;
@@ -693,9 +756,12 @@ def about():
                 margin-bottom: 2rem;
                 transition: transform 0.3s ease-in-out;
             }
+
             .info-card:hover {
                 transform: translateY(-10px);
             }
+
+            /* Titles and Text Styles */
             .info-title {
                 color: #ffffff;
                 font-size: 28px;
@@ -703,14 +769,17 @@ def about():
                 margin-bottom: 1rem;
                 text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
             }
+
             .info-text {
                 color: #d1d7ff;
                 font-size: 20px;
                 line-height: 1.8;
                 text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
             }
-            #about-fixmycampus{
+                #about-fixmycampus{
                 margin-top:-50px;}
+
+            /* Animations */
             @keyframes fadeIn {
                 from {
                     opacity: 0;
@@ -722,6 +791,7 @@ def about():
         </style>
     """, unsafe_allow_html=True)
 
+    # Hero section
     st.markdown("""
         <div class="hero-section">
             <h1>About FixMyCampus</h1>
@@ -729,6 +799,7 @@ def about():
         </div>
     """, unsafe_allow_html=True)
 
+    # Info sections
     st.markdown('<div class="info-card">', unsafe_allow_html=True)
     st.markdown('<div class="info-title">🚀 What is FixMyCampus?</div>', unsafe_allow_html=True)
     st.markdown('<div class="info-text">FixMyCampus is a platform designed to help students report infrastructure issues such as electricity, water, internet, cleanliness, and more. We aim to ensure transparency and efficient resolutions for a better campus experience.</div>', unsafe_allow_html=True)
@@ -762,9 +833,9 @@ def about():
     st.markdown('<div class="info-title">🤝 Together, We Improve Campus Life</div>', unsafe_allow_html=True)
     st.markdown('<div class="info-text">FixMyCampus is more than just a platform for reporting issues; its a community-driven initiative to improve campus facilities and student life. Your voice matters, and together we can make a difference.</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
-
-#-------------------------------------- Main page ----------------
+#-------------------------------------- Main page ----------------     
 if st.session_state.page not in ["login", "signup"]:
+
     st.sidebar.markdown("""
         <style>
         .eu6p4el3
@@ -773,7 +844,7 @@ if st.session_state.page not in ["login", "signup"]:
             }
         .eht7o1d1,.e19011e68
             {
-                background-color:blue;
+                background-color: blue;
             }
         .eht7o1d1
             {
@@ -810,7 +881,7 @@ if st.session_state.page not in ["login", "signup"]:
             "📌 Institute Info",
             "📝 Report an Issue",
             "📋 My Issue",
-            "📊 Issue Status",
+            "📊 Issue Dashboard",
             "👤 View Profile",
             "🔐 Change Password",
             "💬 Help & Support",
@@ -821,6 +892,8 @@ if st.session_state.page not in ["login", "signup"]:
             menu_icon="cast",
             default_index=0,
         )
+
+
 
 #----------------------------------- PAGE ROUTING ---------------------------------
 if st.session_state.page == "login":
@@ -841,14 +914,16 @@ elif st.session_state.page == "📝 Report an Issue":
 elif st.session_state.page == "📋 My Issue":
     my_issue()    
 
+elif st.session_state.page =="📊 Issue Dashboard":
+    issue_dashboard()
+    # st.title(f"Welcome, {st.session_state.user}!")
+    issue_status()
+    
 elif st.session_state.page =="🔐 Change Password":
     change_password()    
  
 elif st.session_state.page == "🏠 Home":
     home()
-elif st.session_state.page == "📊 Issue Status":
-    issue_dashboard()
-    issue_status()     
 
 elif st.session_state.page == "💬 Help & Support":
     help_support_page()
