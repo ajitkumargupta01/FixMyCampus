@@ -87,7 +87,7 @@ def login():
         login_button = col1.form_submit_button("Log In")
         forgot_button= col4.form_submit_button("Forgot password")
         signup_button = col2.form_submit_button("Sign Up")
-        Admin_button = col6.link_button("Admin login","http://localhost:8504/")
+        Admin_button = col6.link_button("Admin login","https://fixmycampus-dmin.streamlit.app/")
 
 
         if forgot_button:
